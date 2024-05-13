@@ -1,0 +1,1 @@
+ /Users/ramsey/StudioProjects/ToC-Software/toc_software/.dart_tool/flutter_gen/gen_l10n/app_localizations_en.dart /Users/ramsey/StudioProjects/ToC-Software/toc_software/.dart_tool/flutter_gen/gen_l10n/app_localizations.dart:  /Users/ramsey/StudioProjects/ToC-Software/toc_software/l10n.yaml /Users/ramsey/StudioProjects/ToC-Software/toc_software/lib/src/localization/app_en.arb

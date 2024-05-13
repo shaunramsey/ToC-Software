@@ -10,4 +10,4 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 
 # Intro
-Companion software to my book Theory of Computation: an undergraduate introduction for programmers.
+Companion software to my book Theory of Computation: an undergraduate introduction for  programmers.
