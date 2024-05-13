@@ -13,7 +13,7 @@ class SampleItemDetailsView extends StatelessWidget {
         title: const Text('Item Details'),
       ),
       body: const Center(
-        child: Text('Finally center text'),
+        child: Text('Finally center texts'),
       ),
     );
   }
