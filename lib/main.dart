@@ -119,13 +119,19 @@ class _LeftHandBoxState extends State<LeftHandBox> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: _isEditing
-              ? TextField(
-            controller: _textController,
-            autofocus: true,
-            maxLines: null, // Allow multiple lines of text
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.all(16),
+              ? SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Container(
+              width: boxWidth * 9, // Make the container wider than the visible box
+              child: TextField(
+                controller: _textController,
+                autofocus: true,
+                maxLines: null, // Allow multiple lines of text
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.all(16),
+                ),
+              ),
             ),
           )
               : const Center(
