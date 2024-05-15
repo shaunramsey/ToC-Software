@@ -90,16 +90,17 @@ class _LeftHandBoxState extends State<LeftHandBox> {
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-    double boxWidth = 300;
-    double boxHeight = 300;
-    double horizontalPosition = ((screenWidth / 2) - boxWidth) / 2;
-    double verticalPosition = (screenHeight - boxHeight) / 2;
+
+    Size screenSize = MediaQuery.of(context).size;
+    double boxWidth = screenSize.width / 4 ; // Adjust the division factor as needed
+    double boxHeight = screenSize.height / 3; // Adjust the division factor as needed
+    double boxVertical = screenSize.width / 6 ; // Adjust the division factor as needed
+    double boxHorizontal = screenSize.height / 3; // Adjust the division factor as needed
+
 
     return Positioned(
-      left: horizontalPosition,
-      top: verticalPosition,
+      left: boxVertical,
+      top: boxHorizontal,
       child: GestureDetector(
         onTap: () {
           setState(() {
