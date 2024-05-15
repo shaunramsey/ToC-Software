@@ -96,7 +96,13 @@ class _LeftHandBoxState extends State<LeftHandBox> {
     double boxHeight = screenSize.height / 3; // Adjust the division factor as needed
     double boxVertical = screenSize.width / 6 ; // Adjust the division factor as needed
     double boxHorizontal = screenSize.height / 3; // Adjust the division factor as needed
-
+    if(boxWidth < 100) {
+      boxWidth = 100;
+    }
+    if(boxHeight < 100) {
+      boxHeight = 100;
+    }
+    print("${boxWidth}, ${boxHeight}, ${boxVertical}, ${boxHorizontal}");
 
     return Positioned(
       left: boxVertical,
