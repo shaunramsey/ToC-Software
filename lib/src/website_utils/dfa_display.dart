@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'circle_painter.dart';
+
 //import 'note_pad.dart';
 //import 'scroll_controller.dart';
 //import 'website_appbar.dart';
@@ -22,6 +24,9 @@ class DFADisplay extends StatelessWidget {
     double displayWidth = MediaQuery.of(context).size.width / 2;
     double displayHeight = MediaQuery.of(context).size.height / 1.5;
 
+    // Get the words from the first line
+    List<String> words = lines.isNotEmpty ? lines[0].split(' ') : [];
+
     return Positioned(
       left: left,
       top: top,
@@ -36,21 +41,8 @@ class DFADisplay extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(5.0),
         ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              for (int i = 0; i < lines.length; i++)
-                Text(
-                  lines[i],
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-            ],
-          ),
+        child: CustomPaint(
+          painter: CirclePainter(words),
         ),
       ),
     );
