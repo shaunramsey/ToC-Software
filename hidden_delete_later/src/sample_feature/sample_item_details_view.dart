@@ -3,7 +3,7 @@
 
 import 'package:flutter/material.dart';
 
-/// Displays detailed information about a SampleItem.
+// Displays detailed information about a SampleItem.
 class SampleItemDetailsView extends StatelessWidget {
   const SampleItemDetailsView({super.key});
 

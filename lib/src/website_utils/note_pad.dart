@@ -8,11 +8,13 @@ import 'package:flutter/material.dart';
 class NotePad extends StatefulWidget {
   final double left;
   final double top;
+  final Function(List<String>) onProcessInput;
 
   const NotePad({
     super.key,
     required this.left,
     required this.top,
+    required this.onProcessInput,
   });
 
   @override
@@ -22,13 +24,11 @@ class NotePad extends StatefulWidget {
 class _NotePadState extends State<NotePad> {
   final TextEditingController _controller = TextEditingController();
   List<String> lines = [];
-  List<List<String>> words = [];
 
   void _processInput() {
     String input = _controller.text;
     lines = input.split('\n');
-    words = lines.map((line) => line.split(' ')).toList();
-    // Do something with lines and words
+    widget.onProcessInput(lines); // Call the callback with the processed lines
   }
 
   @override
@@ -75,3 +75,5 @@ class _NotePadState extends State<NotePad> {
     );
   }
 }
+
+
