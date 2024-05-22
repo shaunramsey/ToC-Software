@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 //import 'src/website_utils/note_pad.dart';
-import 'src/website_utils/scroll_controller.dart';
-import 'src/website_utils/website_appbar.dart';
-import 'src/website_utils/website_background.dart';
+import 'src/DFA_logic/scroll_controller.dart';
+import 'src/simple_UI/website_appbar.dart';
+import 'src/simple_UI/website_background.dart';
 
 
 void main() {
