@@ -22,8 +22,8 @@ class DFADisplay extends StatelessWidget {
     final positions = <Offset>[];
 
     // Calculate the radius to fit within the rectangle, leaving some margin
-    final radiusX = (size.width / 2) - 40; // Leave some margin on the sides
-    final radiusY = (size.height / 2) - 40; // Leave some margin on the top and bottom
+    final radiusX = (size.width / 2) - 100; // Leave some margin on the sides
+    final radiusY = (size.height / 2) - 100; // Leave some margin on the top and bottom
     final angleIncrement = (2 * pi) / count;
 
     for (int i = 0; i < count; i++) {

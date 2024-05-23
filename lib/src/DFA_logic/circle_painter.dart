@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'edges_painter.dart';
 
-
-
 class CirclePainter extends CustomPainter {
   final List<String> words;
   final List<Edge> edges;
@@ -55,66 +53,159 @@ class CirclePainter extends CustomPainter {
     for (final edge in edges) {
       final start = positions[edge.startIndex];
       final end = positions[edge.endIndex];
-      final angle = atan2(end.dy - start.dy, end.dx - start.dx);
 
-      // Calculate new start and end points that touch the circumference of the circles
-      final startX = start.dx + radius * cos(angle);
-      final startY = start.dy + radius * sin(angle);
-      final endX = end.dx - radius * cos(angle);
-      final endY = end.dy - radius * sin(angle);
+      if (start == end) {
+        // Draw a self-loop
+        const loopRadius = 60.0; // Radius for the loop slightly larger than node's radius
 
-      final startPoint = Offset(startX, startY);
-      final endPoint = Offset(endX, endY);
+        // Define start and end points on the circumference of the circle
+        final startX = start.dx + radius * cos(-pi / 4);
+        final startY = start.dy + radius * sin(-pi / 4);
+        final endX = start.dx + radius * cos(-pi / 4 - pi / 2);
+        final endY = start.dy + radius * sin(-pi / 4 - pi / 2);
 
-      // Draw the line
-      canvas.drawLine(startPoint, endPoint, paint);
+        // Define control points for the Bezier curve
+        final controlPoint1 = Offset(start.dx + loopRadius, start.dy - loopRadius);
+        final controlPoint2 = Offset(start.dx - loopRadius, start.dy - loopRadius);
 
-      // Draw the arrowhead
-      final arrowSize = 10.0;
-      final arrowAngle = pi / 6;
-      final path = Path();
-      path.moveTo(endPoint.dx, endPoint.dy);
-      path.lineTo(
-        endPoint.dx - arrowSize * cos(angle - arrowAngle),
-        endPoint.dy - arrowSize * sin(angle - arrowAngle),
-      );
-      path.moveTo(endPoint.dx, endPoint.dy);
-      path.lineTo(
-        endPoint.dx - arrowSize * cos(angle + arrowAngle),
-        endPoint.dy - arrowSize * sin(angle + arrowAngle),
-      );
-      canvas.drawPath(path, paint);
+        final path = Path();
+        path.moveTo(startX, startY);
+        path.cubicTo(
+          controlPoint1.dx, controlPoint1.dy,
+          controlPoint2.dx, controlPoint2.dy,
+          endX, endY,
+        );
 
-      // Draw the label background
-      final labelSpan = TextSpan(text: edge.label, style: textStyle);
-      final labelPainter = TextPainter(
-        text: labelSpan,
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.ltr,
-      );
-      labelPainter.layout(minWidth: 0, maxWidth: size.width);
-      final labelOffset = Offset(
-        (startPoint.dx + endPoint.dx) / 2 - labelPainter.width / 2,
-        (startPoint.dy + endPoint.dy) / 2 - labelPainter.height / 2,
-      );
+        canvas.drawPath(path, paint);
 
-      // Draw a background rectangle for the label
-      final backgroundPaint = Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill;
+        // Draw the arrowhead for the self-loop
+        const arrowSize = 10.0;
+        const arrowAngle = pi / 6; // Adjusted angle for a better arrowhead
+        final pathArrow = Path();
 
-      final backgroundRect = Rect.fromLTWH(
-        labelOffset.dx - 2,
-        labelOffset.dy - 2,
-        labelPainter.width + 4,
-        labelPainter.height + 4,
-      );
+        // First side of the arrowhead
+        pathArrow.moveTo(endX, endY);
+        pathArrow.lineTo(
+          endX - arrowSize * cos(arrowAngle + pi / 4),
+          endY - arrowSize * sin(arrowAngle + pi / 4),
+        );
 
-      canvas.drawRect(backgroundRect, backgroundPaint);
-      canvas.drawRect(backgroundRect, paint); // Add a border to the rectangle
+        // Second side of the arrowhead
+        pathArrow.moveTo(endX, endY);
+        pathArrow.lineTo(
+          endX - arrowSize * cos(-arrowAngle + pi / 4),
+          endY - arrowSize * sin(-arrowAngle + pi / 4),
+        );
+        canvas.drawPath(pathArrow, paint);
 
-      // Draw the label
-      labelPainter.paint(canvas, labelOffset);
+        // Draw the label for the self-loop
+        final labelSpan = TextSpan(text: edge.labels.join(', '), style: textStyle);
+        final labelPainter = TextPainter(
+          text: labelSpan,
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        );
+        labelPainter.layout(minWidth: 0, maxWidth: size.width);
+        final labelOffset = Offset(
+          start.dx - labelPainter.width / 2,
+          start.dy - loopRadius,
+        );
+
+        // Draw a background rectangle for the label
+        final backgroundPaint = Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill;
+
+        final backgroundRect = Rect.fromLTWH(
+          labelOffset.dx - 2,
+          labelOffset.dy - 2,
+          labelPainter.width + 4,
+          labelPainter.height + 4,
+        );
+
+        canvas.drawRect(backgroundRect, backgroundPaint);
+        canvas.drawRect(backgroundRect, paint); // Add a border to the rectangle
+
+        // Draw the label
+        labelPainter.paint(canvas, labelOffset);
+      } else {
+        // Draw a normal edge with a slight bend
+        final angle = atan2(end.dy - start.dy, end.dx - start.dx);
+
+        // Calculate new start and end points that touch the circumference of the circles
+        final startX = start.dx + radius * cos(angle);
+        final startY = start.dy + radius * sin(angle);
+        final endX = end.dx - radius * cos(angle);
+        final endY = end.dy - radius * sin(angle);
+
+        final startPoint = Offset(startX, startY);
+        final endPoint = Offset(endX, endY);
+
+        // Define control point for the Bezier curve
+        final midPoint = Offset((startPoint.dx + endPoint.dx) / 2, (startPoint.dy + endPoint.dy) / 2);
+        const double bendAmount = 14.0; // Adjust this value to increase or decrease the curvature
+        final controlPoint = Offset(
+          midPoint.dx + bendAmount * sin(angle), // Adjust the bend amount
+          midPoint.dy - bendAmount * cos(angle),
+        );
+
+        final path = Path();
+        path.moveTo(startPoint.dx, startPoint.dy);
+        path.quadraticBezierTo(
+          controlPoint.dx, controlPoint.dy,
+          endPoint.dx, endPoint.dy,
+        );
+
+        canvas.drawPath(path, paint);
+
+        // Draw the arrowhead
+        const arrowSize = 10.0;
+        const arrowAngle = pi / 6;
+        final pathArrow = Path();
+        pathArrow.moveTo(endPoint.dx, endPoint.dy);
+        pathArrow.lineTo(
+          endPoint.dx - arrowSize * cos(angle - arrowAngle),
+          endPoint.dy - arrowSize * sin(angle - arrowAngle),
+        );
+        pathArrow.moveTo(endPoint.dx, endPoint.dy);
+        pathArrow.lineTo(
+          endPoint.dx - arrowSize * cos(angle + arrowAngle),
+          endPoint.dy - arrowSize * sin(angle + arrowAngle),
+        );
+        canvas.drawPath(pathArrow, paint);
+
+        // Draw the label background
+        final labelSpan = TextSpan(text: edge.labels.join(', '), style: textStyle);
+        final labelPainter = TextPainter(
+          text: labelSpan,
+          textAlign: TextAlign.center,
+          textDirection: TextDirection.ltr,
+        );
+        labelPainter.layout(minWidth: 0, maxWidth: size.width);
+
+        // Calculate label position along the curved edge
+        final labelX = (startPoint.dx + endPoint.dx) / 2 - labelPainter.width / 2 + bendAmount * sin(angle);
+        final labelY = (startPoint.dy + endPoint.dy) / 2 - labelPainter.height / 2 - bendAmount * cos(angle);
+        final labelOffset = Offset(labelX, labelY);
+
+        // Draw a background rectangle for the label
+        final backgroundPaint = Paint()
+          ..color = Colors.white
+          ..style = PaintingStyle.fill;
+
+        final backgroundRect = Rect.fromLTWH(
+          labelOffset.dx - 2,
+          labelOffset.dy - 2,
+          labelPainter.width + 4,
+          labelPainter.height + 4,
+        );
+
+        canvas.drawRect(backgroundRect, backgroundPaint);
+        canvas.drawRect(backgroundRect, paint); // Add a border to the rectangle
+
+        // Draw the label
+        labelPainter.paint(canvas, labelOffset);
+      }
     }
   }
 
@@ -123,4 +214,3 @@ class CirclePainter extends CustomPainter {
     return true; // Ensure that the painter repaints when needed
   }
 }
-
