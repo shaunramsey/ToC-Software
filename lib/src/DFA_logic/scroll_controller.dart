@@ -31,7 +31,7 @@ class _ScrollableNotePadsState extends State<ScrollableNotePads> {
               onProcessInput: handleProcessInput, // eat input from notepad
             ),
             DFADisplay(
-              left: MediaQuery.of(context).size.width / 1.25 - MediaQuery.of(context).size.width / 1.5,
+              left: MediaQuery.of(context).size.width / 2 - MediaQuery.of(context).size.width / 1.25 / 2,
               top: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height * 0.25,
               lines: processedLines, // Pass the processed lines to DFADisplay
             ),

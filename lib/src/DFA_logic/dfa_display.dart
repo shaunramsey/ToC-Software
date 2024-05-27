@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'dart:math';
 import 'circle_painter.dart';
 import 'edges_painter.dart';
+import 'draggable_node.dart';
 
 
 
-class DFADisplay extends StatelessWidget {
+class DFADisplay extends StatefulWidget {
   final double left;
   final double top;
   final List<String> lines;
@@ -17,23 +18,50 @@ class DFADisplay extends StatelessWidget {
     required this.lines,
   });
 
-  List<Offset> _calculatePositions(Size size, int count) {
+  @override
+  State<DFADisplay> createState() => _DFADisplayState();
+}
+
+class _DFADisplayState extends State<DFADisplay> {
+  late List<Node> nodes;
+
+  @override
+  void initState() {
+    super.initState();
+    nodes = [];
+  }
+
+  void _initializeNodes(Size size) {
+    List<String> wordsSplit = widget.lines.isNotEmpty ? widget.lines[0].trim().split(' ') : [];
+    List<String> words = [];
+    for (int i = 0; i < wordsSplit.length; i++) {
+      String s = wordsSplit[i].trim();
+      if (s.isNotEmpty) {
+        words.add(s);
+      }
+    }
+
     final center = Offset(size.width / 2, size.height / 2);
     final positions = <Offset>[];
+    final radiusX = (size.width / 2) - 100;
+    final radiusY = (size.height / 2) - 100;
+    final angleIncrement = (2 * pi) / words.length;
 
-    // Calculate the radius to fit within the rectangle, leaving some margin
-    final radiusX = (size.width / 2) - 100; // Leave some margin on the sides
-    final radiusY = (size.height / 2) - 100; // Leave some margin on the top and bottom
-    final angleIncrement = (2 * pi) / count;
-
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < words.length; i++) {
       final angle = angleIncrement * i;
       positions.add(Offset(
         center.dx + radiusX * cos(angle),
         center.dy + radiusY * sin(angle),
       ));
     }
-    return positions;
+
+    nodes = List<Node>.generate(words.length, (index) => Node(words[index], positions[index], 21.0));
+  }
+
+  void _updateNodePosition(int index, Offset newPosition) {
+    setState(() {
+      nodes[index].position = newPosition;
+    });
   }
 
   @override
@@ -41,25 +69,15 @@ class DFADisplay extends StatelessWidget {
     double displayWidth = MediaQuery.of(context).size.width / 1.25;
     double displayHeight = MediaQuery.of(context).size.height / 1.25;
 
-    // Get the words from the first line
-    List<String> wordsSplit = lines.isNotEmpty ? lines[0].trim().split(' ') : [];
-    List<String> words = [];
-    for (int i = 0; i < wordsSplit.length; i++) {
-      String s = wordsSplit[i].trim();
-      if(s.isNotEmpty) {
-        words.add(s);
-      }
+    if (nodes.isEmpty) {
+      _initializeNodes(Size(displayWidth, displayHeight));
     }
 
-    // Calculate positions for circles
-    List<Offset> positions = _calculatePositions(Size(displayWidth, displayHeight), words.length);
-
-    // Create edges
-    final edges = Edges(lines, words).edges;
+    final edges = Edges(widget.lines, nodes.map((node) => node.label).toList()).edges;
 
     return Positioned(
-      left: left,
-      top: top,
+      left: widget.left,
+      top: widget.top,
       child: Container(
         width: displayWidth,
         height: displayHeight,
@@ -71,11 +89,27 @@ class DFADisplay extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(5.0),
         ),
-        child: CustomPaint(
-          painter: CirclePainter(words, edges, positions),
+        child: Stack(
+          children: [
+            CustomPaint(
+              painter: CirclePainter(nodes, edges),
+              child: Container(), // Add this to ensure child is not null
+            ),
+            for (int i = 0; i < nodes.length; i++)
+              Positioned(
+                left: nodes[i].position.dx - nodes[i].radius,
+                top: nodes[i].position.dy - nodes[i].radius,
+                child: DraggableNode(
+                  node: nodes[i],
+                  onPositionChanged: (newPosition) => _updateNodePosition(i, newPosition),
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
+
+
 

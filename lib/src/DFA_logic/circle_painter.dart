@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'edges_painter.dart';
+import 'draggable_node.dart';
+
+
 
 class CirclePainter extends CustomPainter {
-  final List<String> words;
+  final List<Node> nodes;
   final List<Edge> edges;
-  final List<Offset> positions;
 
-  CirclePainter(this.words, this.edges, this.positions);
+  CirclePainter(this.nodes, this.edges);
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (words.isEmpty) {
+    if (nodes.isEmpty) {
       return;
     }
 
@@ -25,17 +27,11 @@ class CirclePainter extends CustomPainter {
       fontSize: 15,
     );
 
-    const radius = 21.0; // Radius of each circle
+    for (final node in nodes) {
+      final offset = node.position;
+      canvas.drawCircle(offset, node.radius, paint);
 
-    // Draw the circles and the words inside them
-    for (int i = 0; i < words.length; i++) {
-      final offset = positions[i];
-
-      // Draw the circle
-      canvas.drawCircle(offset, radius, paint);
-
-      // Draw the word inside the circle
-      final textSpan = TextSpan(text: words[i], style: textStyle);
+      final textSpan = TextSpan(text: node.label, style: textStyle);
       final textPainter = TextPainter(
         text: textSpan,
         textAlign: TextAlign.center,
@@ -49,10 +45,11 @@ class CirclePainter extends CustomPainter {
       textPainter.paint(canvas, textOffset);
     }
 
-    // Draw the edges
     for (final edge in edges) {
-      final start = positions[edge.startIndex];
-      final end = positions[edge.endIndex];
+      final start = nodes[edge.startIndex].position;
+      final end = nodes[edge.endIndex].position;
+      final radius = nodes[edge.startIndex].radius;
+
 
       if (start == end) {
         // Draw a self-loop
