@@ -132,18 +132,23 @@ class CirclePainter extends CustomPainter {
         // Draw a normal edge with a slight bend
         final angle = atan2(end.dy - start.dy, end.dx - start.dx);
 
+        // Calculate a perpendicular offset
+        const perpendicularOffset = -5.0;
+        final perpAngle = angle + pi / 2;
+        final offsetX = perpendicularOffset * cos(perpAngle);
+        final offsetY = perpendicularOffset * sin(perpAngle);
+
         // Calculate new start and end points that touch the circumference of the circles
-        final startX = start.dx + radius * cos(angle);
-        final startY = start.dy + radius * sin(angle);
-        final endX = end.dx - radius * cos(angle);
-        final endY = end.dy - radius * sin(angle);
+        final startX = start.dx + radius * cos(angle) + offsetX;
+        final startY = start.dy + radius * sin(angle) + offsetY;
+        final endX = end.dx - radius * cos(angle) + offsetX;
+        final endY = end.dy - radius * sin(angle) + offsetY;
 
         final startPoint = Offset(startX, startY);
         final endPoint = Offset(endX, endY);
-
         // Define control point for the Bezier curve
         final midPoint = Offset((startPoint.dx + endPoint.dx) / 2, (startPoint.dy + endPoint.dy) / 2);
-        const double bendAmount = 14.0; // Adjust this value to increase or decrease the curvature
+        const double bendAmount = 80.0; // Adjust this value to increase or decrease the curvature
         final controlPoint = Offset(
           midPoint.dx + bendAmount * sin(angle), // Adjust the bend amount
           midPoint.dy - bendAmount * cos(angle),
@@ -158,19 +163,29 @@ class CirclePainter extends CustomPainter {
 
         canvas.drawPath(path, paint);
 
+        // Calculate the tangent at the end point of the Bezier curve
+        const double t = 0.95; // Value close to 1 for point near the end
+        final tangentPointX = (1 - t) * (1 - t) * startPoint.dx +
+            2 * (1 - t) * t * controlPoint.dx +
+            t * t * endPoint.dx;
+        final tangentPointY = (1 - t) * (1 - t) * startPoint.dy +
+            2 * (1 - t) * t * controlPoint.dy +
+            t * t * endPoint.dy;
+        final tangentAngle = atan2(endPoint.dy - tangentPointY, endPoint.dx - tangentPointX);
+
         // Draw the arrowhead
         const arrowSize = 10.0;
         const arrowAngle = pi / 6;
         final pathArrow = Path();
         pathArrow.moveTo(endPoint.dx, endPoint.dy);
         pathArrow.lineTo(
-          endPoint.dx - arrowSize * cos(angle - arrowAngle),
-          endPoint.dy - arrowSize * sin(angle - arrowAngle),
+          endPoint.dx - arrowSize * cos(tangentAngle - arrowAngle),
+          endPoint.dy - arrowSize * sin(tangentAngle - arrowAngle),
         );
         pathArrow.moveTo(endPoint.dx, endPoint.dy);
         pathArrow.lineTo(
-          endPoint.dx - arrowSize * cos(angle + arrowAngle),
-          endPoint.dy - arrowSize * sin(angle + arrowAngle),
+          endPoint.dx - arrowSize * cos(tangentAngle + arrowAngle),
+          endPoint.dy - arrowSize * sin(tangentAngle + arrowAngle),
         );
         canvas.drawPath(pathArrow, paint);
 
@@ -184,8 +199,8 @@ class CirclePainter extends CustomPainter {
         labelPainter.layout(minWidth: 0, maxWidth: size.width);
 
         // Calculate label position along the curved edge
-        final labelX = (startPoint.dx + endPoint.dx) / 2 - labelPainter.width / 2 + bendAmount * sin(angle);
-        final labelY = (startPoint.dy + endPoint.dy) / 2 - labelPainter.height / 2 - bendAmount * cos(angle);
+        final labelX = (startPoint.dx + endPoint.dx) / 2 - labelPainter.width / 2 + bendAmount / 2 * sin(angle);
+        final labelY = (startPoint.dy + endPoint.dy) / 2 - labelPainter.height / 2 - bendAmount / 2 * cos(angle);
         final labelOffset = Offset(labelX, labelY);
 
         // Draw a background rectangle for the label
