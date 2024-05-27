@@ -56,17 +56,21 @@ class CirclePainter extends CustomPainter {
 
       if (start == end) {
         // Draw a self-loop
-        const loopRadius = 60.0; // Radius for the loop slightly larger than node's radius
+        const loopRadius = 111.0; // Radius for the loop slightly larger than node's radius
+
+        // Calculate the angle from the center of the container to the node
+        final containerCenter = Offset(size.width / 2, size.height / 2);
+        final angleToCenter = atan2(start.dy - containerCenter.dy, start.dx - containerCenter.dx);
 
         // Define start and end points on the circumference of the circle
-        final startX = start.dx + radius * cos(-pi / 4);
-        final startY = start.dy + radius * sin(-pi / 4);
-        final endX = start.dx + radius * cos(-pi / 4 - pi / 2);
-        final endY = start.dy + radius * sin(-pi / 4 - pi / 2);
+        final startX = start.dx + radius * cos(angleToCenter - pi / 6);
+        final startY = start.dy + radius * sin(angleToCenter - pi / 6);
+        final endX = start.dx + radius * cos(angleToCenter + pi / 6);
+        final endY = start.dy + radius * sin(angleToCenter + pi / 6);
 
         // Define control points for the Bezier curve
-        final controlPoint1 = Offset(start.dx + loopRadius, start.dy - loopRadius);
-        final controlPoint2 = Offset(start.dx - loopRadius, start.dy - loopRadius);
+        final controlPoint1 = Offset(start.dx + loopRadius * cos(angleToCenter - pi / 4), start.dy + loopRadius * sin(angleToCenter - pi / 4));
+        final controlPoint2 = Offset(start.dx + loopRadius * cos(angleToCenter + pi / 4), start.dy + loopRadius * sin(angleToCenter + pi / 4));
 
         final path = Path();
         path.moveTo(startX, startY);
@@ -78,6 +82,16 @@ class CirclePainter extends CustomPainter {
 
         canvas.drawPath(path, paint);
 
+        // Calculate the tangent at the end point of the Bezier curve
+        const double t = 0.95; // Value close to 1 for point near the end
+        final tangentPointX = (1 - t) * (1 - t) * startX +
+            2 * (1 - t) * t * controlPoint2.dx +
+            t * t * endX;
+        final tangentPointY = (1 - t) * (1 - t) * startY +
+            2 * (1 - t) * t * controlPoint2.dy +
+            t * t * endY;
+        final tangentAngle = atan2(endY - tangentPointY, endX - tangentPointX);
+
         // Draw the arrowhead for the self-loop
         const arrowSize = 10.0;
         const arrowAngle = pi / 6; // Adjusted angle for a better arrowhead
@@ -86,17 +100,29 @@ class CirclePainter extends CustomPainter {
         // First side of the arrowhead
         pathArrow.moveTo(endX, endY);
         pathArrow.lineTo(
-          endX - arrowSize * cos(arrowAngle + pi / 4),
-          endY - arrowSize * sin(arrowAngle + pi / 4),
+          endX - arrowSize * cos(tangentAngle - arrowAngle),
+          endY - arrowSize * sin(tangentAngle - arrowAngle),
         );
 
         // Second side of the arrowhead
         pathArrow.moveTo(endX, endY);
         pathArrow.lineTo(
-          endX - arrowSize * cos(-arrowAngle + pi / 4),
-          endY - arrowSize * sin(-arrowAngle + pi / 4),
+          endX - arrowSize * cos(tangentAngle + arrowAngle),
+          endY - arrowSize * sin(tangentAngle + arrowAngle),
         );
         canvas.drawPath(pathArrow, paint);
+
+
+        // Calculate the midpoint of the Bezier curve for the label
+        const double tLabel = 0.5; // Value for midpoint
+        final double labelMidPointX = (1 - tLabel) * (1 - tLabel) * (1 - tLabel) * startX +
+            3 * (1 - tLabel) * (1 - tLabel) * tLabel * controlPoint1.dx +
+            3 * (1 - tLabel) * tLabel * tLabel * controlPoint2.dx +
+            tLabel * tLabel * tLabel * endX;
+        final double labelMidPointY = (1 - tLabel) * (1 - tLabel) * (1 - tLabel) * startY +
+            3 * (1 - tLabel) * (1 - tLabel) * tLabel * controlPoint1.dy +
+            3 * (1 - tLabel) * tLabel * tLabel * controlPoint2.dy +
+            tLabel * tLabel * tLabel * endY;
 
         // Draw the label for the self-loop
         final labelSpan = TextSpan(text: edge.labels.join(', '), style: textStyle);
@@ -107,8 +133,8 @@ class CirclePainter extends CustomPainter {
         );
         labelPainter.layout(minWidth: 0, maxWidth: size.width);
         final labelOffset = Offset(
-          start.dx - labelPainter.width / 2,
-          start.dy - loopRadius,
+          labelMidPointX - labelPainter.width / 2,
+          labelMidPointY - labelPainter.height / 2,
         );
 
         // Draw a background rectangle for the label
