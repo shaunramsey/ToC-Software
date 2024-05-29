@@ -6,6 +6,8 @@ import 'draggable_node.dart';
 
 
 
+
+
 class DFADisplay extends StatefulWidget {
   final double left;
   final double top;
@@ -29,9 +31,18 @@ class _DFADisplayState extends State<DFADisplay> {
   void initState() {
     super.initState();
     nodes = [];
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initializeNodes());
   }
 
-  void _initializeNodes(Size size) {
+  @override
+  void didUpdateWidget(covariant DFADisplay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.lines != oldWidget.lines) {
+      _initializeNodes();
+    }
+  }
+
+  void _initializeNodes() {
     List<String> wordsSplit = widget.lines.isNotEmpty ? widget.lines[0].trim().split(' ') : [];
     List<String> words = [];
     for (int i = 0; i < wordsSplit.length; i++) {
@@ -41,21 +52,30 @@ class _DFADisplayState extends State<DFADisplay> {
       }
     }
 
-    final center = Offset(size.width / 2, size.height / 2);
-    final positions = <Offset>[];
-    final radiusX = (size.width / 2) - 100;
-    final radiusY = (size.height / 2) - 100;
+    final displayWidth = MediaQuery.of(context).size.width / 1.25;
+    final displayHeight = MediaQuery.of(context).size.height / 1.25;
+    final center = Offset(displayWidth / 2, displayHeight / 2);
+    final radiusX = (displayWidth / 2) - 100;
+    final radiusY = (displayHeight / 2) - 100;
     final angleIncrement = (2 * pi) / words.length;
 
+    List<Node> newNodes = [];
     for (int i = 0; i < words.length; i++) {
       final angle = angleIncrement * i;
-      positions.add(Offset(
+      final position = Offset(
         center.dx + radiusX * cos(angle),
         center.dy + radiusY * sin(angle),
-      ));
+      );
+      if (i < nodes.length) {
+        newNodes.add(Node(words[i], nodes[i].position, 21.0)); // Keep existing node positions
+      } else {
+        newNodes.add(Node(words[i], position, 21.0)); // Add new nodes with calculated positions
+      }
     }
 
-    nodes = List<Node>.generate(words.length, (index) => Node(words[index], positions[index], 21.0));
+    setState(() {
+      nodes = newNodes;
+    });
   }
 
   void _updateNodePosition(int index, Offset newPosition) {
@@ -70,7 +90,7 @@ class _DFADisplayState extends State<DFADisplay> {
     double displayHeight = MediaQuery.of(context).size.height / 1.25;
 
     if (nodes.isEmpty) {
-      _initializeNodes(Size(displayWidth, displayHeight));
+      _initializeNodes();
     }
 
     final edges = Edges(widget.lines, nodes.map((node) => node.label).toList()).edges;
@@ -110,6 +130,5 @@ class _DFADisplayState extends State<DFADisplay> {
     );
   }
 }
-
 
 

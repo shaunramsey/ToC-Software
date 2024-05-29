@@ -22,7 +22,7 @@ class _ScrollableNotePadsState extends State<ScrollableNotePads> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: SizedBox(
-        height: MediaQuery.of(context).size.height * 2,
+        height: MediaQuery.of(context).size.height * 1.5,
         child: Stack(
           children: [
             NotePad(
@@ -32,7 +32,7 @@ class _ScrollableNotePadsState extends State<ScrollableNotePads> {
             ),
             DFADisplay(
               left: MediaQuery.of(context).size.width / 2 - MediaQuery.of(context).size.width / 1.25 / 2,
-              top: MediaQuery.of(context).size.height - MediaQuery.of(context).size.height * 0.25,
+              top: MediaQuery.of(context).size.height * 2 - MediaQuery.of(context).size.height * 1.4,
               lines: processedLines, // Pass the processed lines to DFADisplay
             ),
             // Add more NotePads as needed
