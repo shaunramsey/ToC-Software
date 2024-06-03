@@ -4,9 +4,11 @@ class Node {
   final String label;
   Offset position;
   final double radius;
+  final bool startState; // Add this property
 
-  Node(this.label, this.position, this.radius);
+  Node(this.label, this.position, this.radius, {this.startState = false});
 }
+
 
 
 

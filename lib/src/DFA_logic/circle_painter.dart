@@ -8,8 +8,9 @@ import 'draggable_node.dart';
 class CirclePainter extends CustomPainter {
   final List<Node> nodes;
   final List<Edge> edges;
+  final Set<int> startStates;
 
-  CirclePainter(this.nodes, this.edges);
+  CirclePainter(this.nodes, this.edges, this.startStates);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -151,7 +152,8 @@ class CirclePainter extends CustomPainter {
 
         // Draw the label
         labelPainter.paint(canvas, labelOffset);
-      } else {
+
+      } else  {
         // Draw a normal edge with a slight bend
         final angle = atan2(end.dy - start.dy, end.dx - start.dx);
 
@@ -169,11 +171,13 @@ class CirclePainter extends CustomPainter {
 
         final startPoint = Offset(startX, startY);
         final endPoint = Offset(endX, endY);
+
         // Define control point for the Bezier curve
         final midPoint = Offset((startPoint.dx + endPoint.dx) / 2, (startPoint.dy + endPoint.dy) / 2);
-        const double bendAmount = 80.0; // Adjust this value to increase or decrease the curvature
-        final controlPoint = Offset(
-          midPoint.dx + bendAmount * sin(angle), // Adjust the bend amount
+        double bendAmount = edge.bendAmount; // Use the edge's bendAmount
+
+        Offset controlPoint = Offset(
+          midPoint.dx + bendAmount * sin(angle),
           midPoint.dy - bendAmount * cos(angle),
         );
 
@@ -212,19 +216,21 @@ class CirclePainter extends CustomPainter {
         );
         canvas.drawPath(pathArrow, paint);
 
-        // Draw the label background
-        final labelSpan = TextSpan(text: edge.labels.join(', '), style: textStyle);
+
+        // Calculate label position along the curved edge
         final labelPainter = TextPainter(
-          text: labelSpan,
+          text: TextSpan(text: edge.labels.join(', '), style: textStyle),
           textAlign: TextAlign.center,
           textDirection: TextDirection.ltr,
         );
         labelPainter.layout(minWidth: 0, maxWidth: size.width);
 
-        // Calculate label position along the curved edge
         final labelX = (startPoint.dx + endPoint.dx) / 2 - labelPainter.width / 2 + bendAmount / 2 * sin(angle);
         final labelY = (startPoint.dy + endPoint.dy) / 2 - labelPainter.height / 2 - bendAmount / 2 * cos(angle);
         final labelOffset = Offset(labelX, labelY);
+
+        // Store the label position in the edge object
+        edge.labelPosition = labelOffset;
 
         // Draw a background rectangle for the label
         final backgroundPaint = Paint()
@@ -245,8 +251,79 @@ class CirclePainter extends CustomPainter {
         labelPainter.paint(canvas, labelOffset);
       }
     }
-  }
 
+    // Draw start arrows
+    for (final startIndex in startStates) {
+      final node = nodes[startIndex];
+      final offset = node.position;
+      final radius = node.radius;
+      const angle = 3 * pi / 4; // Flip the angle 180 degrees
+
+      final startX = offset.dx + (radius - 100) * cos(angle); // Adjusted for flipping the arrow
+      final startY = offset.dy + (radius - 100) * sin(angle); // Adjusted for flipping the arrow
+      final endX = offset.dx - radius * cos(angle);
+      final endY = offset.dy - radius * sin(angle);
+
+      final path = Path();
+      path.moveTo(startX, startY);
+      path.lineTo(endX, endY);
+
+      canvas.drawPath(path, paint);
+
+      // Draw the arrowhead
+      const arrowSize = 10.0;
+      const arrowAngle = pi / 6;
+      final pathArrow = Path();
+      pathArrow.moveTo(endX, endY);
+      pathArrow.lineTo(
+        endX - arrowSize * cos(angle - arrowAngle), // Adjusted for flipping the arrowhead
+        endY - arrowSize * sin(angle - arrowAngle), // Adjusted for flipping the arrowhead
+      );
+      pathArrow.moveTo(endX, endY);
+      pathArrow.lineTo(
+        endX - arrowSize * cos(angle + arrowAngle), // Adjusted for flipping the arrowhead
+        endY - arrowSize * sin(angle + arrowAngle), // Adjusted for flipping the arrowhead
+      );
+      canvas.drawPath(pathArrow, paint);
+
+      // Draw the "start" label
+      final labelPainter = TextPainter(
+        text: const TextSpan(
+          text: 'start',
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 15,
+          ),
+        ),
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      );
+      labelPainter.layout(minWidth: 0, maxWidth: size.width);
+
+      final labelOffset = Offset(
+        startX + (endX - startX) * 0.25 - labelPainter.width / 2, // Position the label 3/4 of the way from the start
+        startY + (endY - startY) * 0.25 - labelPainter.height / 2,
+      );
+
+      // Draw a background rectangle for the label
+      final backgroundPaint = Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill;
+
+      final backgroundRect = Rect.fromLTWH(
+        labelOffset.dx - 2,
+        labelOffset.dy - 2,
+        labelPainter.width + 4,
+        labelPainter.height + 4,
+      );
+
+      canvas.drawRect(backgroundRect, backgroundPaint);
+      canvas.drawRect(backgroundRect, paint); // Add a border to the rectangle
+
+      // Draw the label
+      labelPainter.paint(canvas, labelOffset);
+    }
+  }
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true; // Ensure that the painter repaints when needed

@@ -3,10 +3,7 @@ import 'dart:math';
 import 'circle_painter.dart';
 import 'edges_painter.dart';
 import 'draggable_node.dart';
-
-
-
-
+import 'draggable_edge.dart';
 
 class DFADisplay extends StatefulWidget {
   final double left;
@@ -26,11 +23,15 @@ class DFADisplay extends StatefulWidget {
 
 class _DFADisplayState extends State<DFADisplay> {
   late List<Node> nodes;
+  late List<Edge> edges;
+  late Set<int> startStates;
 
   @override
   void initState() {
     super.initState();
     nodes = [];
+    edges = [];
+    startStates = {};
     WidgetsBinding.instance.addPostFrameCallback((_) => _initializeNodes());
   }
 
@@ -75,13 +76,73 @@ class _DFADisplayState extends State<DFADisplay> {
 
     setState(() {
       nodes = newNodes;
+      final edgesClass = Edges(widget.lines, nodes.map((node) => node.label).toList());
+      edges = edgesClass.edges;
+      startStates = edgesClass.startStates;
+
+      // Initialize bendAmount based on the edge conditions
+      final edgeMap = <String, Edge>{};
+      for (var edge in edges) {
+        final key = '${edge.startIndex}-${edge.endIndex}';
+        edgeMap[key] = edge;
+      }
+
+      for (var edge in edges) {
+        final reverseKey = '${edge.endIndex}-${edge.startIndex}';
+        if (edgeMap.containsKey(reverseKey)) {
+          edge.bendAmount = 80.0;
+          edgeMap[reverseKey]!.bendAmount = 80.0;
+        } else {
+          edge.bendAmount = 0.0;
+        }
+      }
+
+      // Initialize control points and label positions
+      _updateEdgeControlPoints();
     });
   }
 
   void _updateNodePosition(int index, Offset newPosition) {
     setState(() {
       nodes[index].position = newPosition;
+      _updateEdgeControlPoints();
     });
+  }
+
+  void _updateEdgeControlPoints() {
+    for (var edge in edges) {
+      final midPoint = _calculateMidPoint(edge);
+      final angle = _calculateAngle(edge);
+      edge.controlPoint = Offset(midPoint.dx + edge.bendAmount * sin(angle), midPoint.dy - edge.bendAmount * cos(angle));
+      edge.labelPosition = _calculateLabelPosition(edge, midPoint);
+    }
+  }
+
+  void _updateControlPoint(Edge edge, double deltaY) {
+    setState(() {
+      edge.bendAmount += deltaY;
+      final midPoint = _calculateMidPoint(edge);
+      final angle = _calculateAngle(edge);
+      edge.controlPoint = Offset(midPoint.dx + edge.bendAmount * sin(angle), midPoint.dy - edge.bendAmount * cos(angle));
+      edge.labelPosition = _calculateLabelPosition(edge, midPoint); // Update label position
+    });
+  }
+
+  Offset _calculateMidPoint(Edge edge) {
+    final start = nodes[edge.startIndex].position;
+    final end = nodes[edge.endIndex].position;
+    return Offset((start.dx + end.dx) / 2, (start.dy + end.dy) / 2);
+  }
+
+  double _calculateAngle(Edge edge) {
+    final start = nodes[edge.startIndex].position;
+    final end = nodes[edge.endIndex].position;
+    return atan2(end.dy - start.dy, end.dx - start.dx);
+  }
+
+  Offset _calculateLabelPosition(Edge edge, Offset midPoint) {
+    final angle = _calculateAngle(edge);
+    return Offset(midPoint.dx + edge.bendAmount * sin(angle) / 2, midPoint.dy - edge.bendAmount * cos(angle) / 2);
   }
 
   @override
@@ -92,8 +153,6 @@ class _DFADisplayState extends State<DFADisplay> {
     if (nodes.isEmpty) {
       _initializeNodes();
     }
-
-    final edges = Edges(widget.lines, nodes.map((node) => node.label).toList()).edges;
 
     return Positioned(
       left: widget.left,
@@ -112,7 +171,7 @@ class _DFADisplayState extends State<DFADisplay> {
         child: Stack(
           children: [
             CustomPaint(
-              painter: CirclePainter(nodes, edges),
+              painter: CirclePainter(nodes, edges, startStates),
               child: Container(), // Add this to ensure child is not null
             ),
             for (int i = 0; i < nodes.length; i++)
@@ -124,11 +183,16 @@ class _DFADisplayState extends State<DFADisplay> {
                   onPositionChanged: (newPosition) => _updateNodePosition(i, newPosition),
                 ),
               ),
+            for (final edge in edges)
+              if (edge.labelPosition != null)
+                DraggableEdge(
+                  labelPosition: edge.labelPosition!,
+                  onControlPointChanged: (deltaY) => _updateControlPoint(edge, deltaY),
+                  angle: _calculateAngle(edge),
+                ),
           ],
         ),
       ),
     );
   }
 }
-
-

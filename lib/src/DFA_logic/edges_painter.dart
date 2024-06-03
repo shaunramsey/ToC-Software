@@ -1,18 +1,23 @@
 
 
+import 'package:flutter/material.dart';
+
+
+
 class Edge {
   final int startIndex;
   final int endIndex;
   final List<String> labels;
+  Offset? controlPoint;
+  double bendAmount;
+  Offset? labelPosition;
 
-  Edge(this.startIndex, this.endIndex, this.labels);
+  Edge(this.startIndex, this.endIndex, this.labels, {this.controlPoint, this.bendAmount = 80.0, this.labelPosition});
 }
-
-
 
 class Edges {
   final List<Edge> edges = [];
-  final Set<String> oppositeEdges = {};
+  final Set<int> startStates = {};
 
   Edges(List<String> lines, List<String> words) {
     final wordIndices = {for (int i = 0; i < words.length; i++) words[i]: i};
@@ -25,16 +30,16 @@ class Edges {
         final endIndex = wordIndices[parts[2]];
         if (startIndex != null && endIndex != null) {
           final key = '$startIndex-$endIndex';
-          final oppositeKey = '$endIndex-$startIndex';
           if (edgeMap.containsKey(key)) {
             edgeMap[key]!.labels.add(parts[1]);
           } else {
             edgeMap[key] = Edge(startIndex, endIndex, [parts[1]]);
           }
-          if (edgeMap.containsKey(oppositeKey)) {
-            oppositeEdges.add(key);
-            oppositeEdges.add(oppositeKey);
-          }
+        }
+      } else if (parts.length == 2 && parts[1] == 'start') {
+        final startIndex = wordIndices[parts[0]];
+        if (startIndex != null) {
+          startStates.add(startIndex);
         }
       }
     }
@@ -42,6 +47,3 @@ class Edges {
     edges.addAll(edgeMap.values);
   }
 }
-
-
-
