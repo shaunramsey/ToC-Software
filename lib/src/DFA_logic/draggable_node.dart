@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 class Node {
   final String label;
   Offset position;
   final double radius;
-  final bool startState; // Add this property
+  double startAngle; // Add this property
 
-  Node(this.label, this.position, this.radius, {this.startState = false});
+  Node(this.label, this.position, this.radius, {this.startAngle = -pi / 2});
 }
+
 
 
 
@@ -42,8 +44,8 @@ class _DraggableNodeState extends State<DraggableNode> {
         widget.onPositionChanged(position);
       },
       child: Container(
-        width: widget.node.radius * 2,
-        height: widget.node.radius * 2,
+        width: widget.node.radius * 2 + 1,
+        height: widget.node.radius * 2 + 1,
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
           color: Colors.transparent,

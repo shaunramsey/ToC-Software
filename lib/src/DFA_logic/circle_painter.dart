@@ -252,17 +252,17 @@ class CirclePainter extends CustomPainter {
       }
     }
 
-    // Draw start arrows
+// Draw start arrows
     for (final startIndex in startStates) {
       final node = nodes[startIndex];
       final offset = node.position;
       final radius = node.radius;
-      const angle = 3 * pi / 4; // Flip the angle 180 degrees
+      final angle = node.startAngle; // Use the start angle
 
-      final startX = offset.dx + (radius - 100) * cos(angle); // Adjusted for flipping the arrow
-      final startY = offset.dy + (radius - 100) * sin(angle); // Adjusted for flipping the arrow
-      final endX = offset.dx - radius * cos(angle);
-      final endY = offset.dy - radius * sin(angle);
+      final startX = offset.dx + (radius + 50) * cos(angle); // Increase arrow length
+      final startY = offset.dy + (radius + 50) * sin(angle); // Increase arrow length
+      final endX = offset.dx + radius * cos(angle);
+      final endY = offset.dy + radius * sin(angle);
 
       final path = Path();
       path.moveTo(startX, startY);
@@ -276,17 +276,17 @@ class CirclePainter extends CustomPainter {
       final pathArrow = Path();
       pathArrow.moveTo(endX, endY);
       pathArrow.lineTo(
-        endX - arrowSize * cos(angle - arrowAngle), // Adjusted for flipping the arrowhead
-        endY - arrowSize * sin(angle - arrowAngle), // Adjusted for flipping the arrowhead
+        endX + arrowSize * cos(angle - arrowAngle), // Inversed arrowhead direction
+        endY + arrowSize * sin(angle - arrowAngle), // Inversed arrowhead direction
       );
       pathArrow.moveTo(endX, endY);
       pathArrow.lineTo(
-        endX - arrowSize * cos(angle + arrowAngle), // Adjusted for flipping the arrowhead
-        endY - arrowSize * sin(angle + arrowAngle), // Adjusted for flipping the arrowhead
+        endX + arrowSize * cos(angle + arrowAngle), // Inversed arrowhead direction
+        endY + arrowSize * sin(angle + arrowAngle), // Inversed arrowhead direction
       );
       canvas.drawPath(pathArrow, paint);
 
-      // Draw the "start" label
+      // Calculate the label position for the start arrow
       final labelPainter = TextPainter(
         text: const TextSpan(
           text: 'start',
@@ -301,8 +301,8 @@ class CirclePainter extends CustomPainter {
       labelPainter.layout(minWidth: 0, maxWidth: size.width);
 
       final labelOffset = Offset(
-        startX + (endX - startX) * 0.25 - labelPainter.width / 2, // Position the label 3/4 of the way from the start
-        startY + (endY - startY) * 0.25 - labelPainter.height / 2,
+        startX + (endX - startX) * 0.25 - labelPainter.width / 2, // Adjust to 1/4 from the start
+        startY + (endY - startY) * 0.25 - labelPainter.height / 2, // Adjust to 1/4 from the start
       );
 
       // Draw a background rectangle for the label
@@ -324,6 +324,7 @@ class CirclePainter extends CustomPainter {
       labelPainter.paint(canvas, labelOffset);
     }
   }
+
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true; // Ensure that the painter repaints when needed

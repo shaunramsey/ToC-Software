@@ -4,6 +4,7 @@ import 'circle_painter.dart';
 import 'edges_painter.dart';
 import 'draggable_node.dart';
 import 'draggable_edge.dart';
+import 'draggable_start.dart';
 
 class DFADisplay extends StatefulWidget {
   final double left;
@@ -68,7 +69,7 @@ class _DFADisplayState extends State<DFADisplay> {
         center.dy + radiusY * sin(angle),
       );
       if (i < nodes.length) {
-        newNodes.add(Node(words[i], nodes[i].position, 21.0)); // Keep existing node positions
+        newNodes.add(Node(words[i], nodes[i].position, 21.0, startAngle: nodes[i].startAngle)); // Keep existing node positions
       } else {
         newNodes.add(Node(words[i], position, 21.0)); // Add new nodes with calculated positions
       }
@@ -145,6 +146,12 @@ class _DFADisplayState extends State<DFADisplay> {
     return Offset(midPoint.dx + edge.bendAmount * sin(angle) / 2, midPoint.dy - edge.bendAmount * cos(angle) / 2);
   }
 
+  void _updateStartAngle(int nodeIndex, double angle) {
+    setState(() {
+      nodes[nodeIndex].startAngle = angle;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double displayWidth = MediaQuery.of(context).size.width / 1.25;
@@ -190,6 +197,13 @@ class _DFADisplayState extends State<DFADisplay> {
                   onControlPointChanged: (deltaY) => _updateControlPoint(edge, deltaY),
                   angle: _calculateAngle(edge),
                 ),
+            for (final startIndex in startStates)
+              DraggableStart(
+                nodePosition: nodes[startIndex].position,
+                nodeRadius: nodes[startIndex].radius,
+                onAngleChanged: (newAngle) => _updateStartAngle(startIndex, newAngle),
+                startAngle: nodes[startIndex].startAngle,
+              ),
           ],
         ),
       ),
