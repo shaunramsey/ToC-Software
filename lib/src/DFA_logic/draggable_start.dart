@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+
 class DraggableStart extends StatefulWidget {
   final Offset nodePosition;
   final double nodeRadius;
@@ -16,11 +17,10 @@ class DraggableStart extends StatefulWidget {
   });
 
   @override
-  State<DraggableStart> createState() => _DraggableStartState();
-
+  DraggableStartState createState() => DraggableStartState();
 }
 
-class _DraggableStartState extends State<DraggableStart> {
+class DraggableStartState extends State<DraggableStart> {
   late Offset position;
   late Size labelSize;
 
@@ -60,6 +60,13 @@ class _DraggableStartState extends State<DraggableStart> {
     _setPosition(angle); // Update position based on the new angle
   }
 
+  void updatePosition(Offset newPosition, double angle) {
+    setState(() {
+      widget.onAngleChanged(angle);
+      _setPosition(angle);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Positioned(
@@ -82,7 +89,7 @@ class _DraggableStartState extends State<DraggableStart> {
         child: Container(
           width: labelSize.width,
           height: labelSize.height,
-          color: Colors.green,
+          color: Colors.green ,
         ),
       ),
     );

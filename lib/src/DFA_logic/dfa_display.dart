@@ -6,6 +6,7 @@ import 'draggable_node.dart';
 import 'draggable_edge.dart';
 import 'draggable_start.dart';
 
+
 class DFADisplay extends StatefulWidget {
   final double left;
   final double top;
@@ -26,6 +27,8 @@ class _DFADisplayState extends State<DFADisplay> {
   late List<Node> nodes;
   late List<Edge> edges;
   late Set<int> startStates;
+  final Map<Edge, GlobalKey<DraggableEdgeState>> edgeKeys = {};
+  final Map<int, GlobalKey<DraggableStartState>> startStateKeys = {};
 
   @override
   void initState() {
@@ -106,7 +109,8 @@ class _DFADisplayState extends State<DFADisplay> {
   void _updateNodePosition(int index, Offset newPosition) {
     setState(() {
       nodes[index].position = newPosition;
-      _updateEdgeControlPoints();
+      _updateEdgeControlPoints(); // Recalculate edge control points and labels
+      _updateStartStatePositions(); // Recalculate start state positions
     });
   }
 
@@ -116,12 +120,27 @@ class _DFADisplayState extends State<DFADisplay> {
       final angle = _calculateAngle(edge);
       edge.controlPoint = Offset(midPoint.dx + edge.bendAmount * sin(angle), midPoint.dy - edge.bendAmount * cos(angle));
       edge.labelPosition = _calculateLabelPosition(edge, midPoint);
+
+      // Update the position of the draggable edge
+      if (edgeKeys.containsKey(edge)) {
+        edgeKeys[edge]?.currentState?.updatePosition(edge.labelPosition!);
+      }
     }
   }
 
-  void _updateControlPoint(Edge edge, double deltaY) {
+  void _updateStartStatePositions() {
+    for (var startIndex in startStates) {
+      final key = startStateKeys[startIndex];
+      if (key != null) {
+        key.currentState?.updatePosition(nodes[startIndex].position, nodes[startIndex].startAngle);
+      }
+    }
+  }
+
+  void _updateControlPoint(Edge edge, double perpendicularMovement) {
     setState(() {
-      edge.bendAmount += deltaY;
+      // Clamp the bend amount to prevent excessive values
+      edge.bendAmount = (edge.bendAmount + perpendicularMovement).clamp(-500.0, 500.0);
       final midPoint = _calculateMidPoint(edge);
       final angle = _calculateAngle(edge);
       edge.controlPoint = Offset(midPoint.dx + edge.bendAmount * sin(angle), midPoint.dy - edge.bendAmount * cos(angle));
@@ -191,14 +210,17 @@ class _DFADisplayState extends State<DFADisplay> {
                 ),
               ),
             for (final edge in edges)
-              if (edge.labelPosition != null)
+              if (edge.labelPosition != null && edge.startIndex != edge.endIndex) // Exclude loop edges
                 DraggableEdge(
+                  key: edgeKeys.putIfAbsent(edge, () => GlobalKey<DraggableEdgeState>()),
                   labelPosition: edge.labelPosition!,
-                  onControlPointChanged: (deltaY) => _updateControlPoint(edge, deltaY),
+                  onControlPointChanged: (perpendicularMovement) => _updateControlPoint(edge, perpendicularMovement),
                   angle: _calculateAngle(edge),
+                  label: edge.labels.join(', '),
                 ),
             for (final startIndex in startStates)
               DraggableStart(
+                key: startStateKeys.putIfAbsent(startIndex, () => GlobalKey<DraggableStartState>()),
                 nodePosition: nodes[startIndex].position,
                 nodeRadius: nodes[startIndex].radius,
                 onAngleChanged: (newAngle) => _updateStartAngle(startIndex, newAngle),

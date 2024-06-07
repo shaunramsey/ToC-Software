@@ -44,11 +44,11 @@ class _DraggableNodeState extends State<DraggableNode> {
         widget.onPositionChanged(position);
       },
       child: Container(
-        width: widget.node.radius * 2 + 1,
-        height: widget.node.radius * 2 + 1,
+        width: widget.node.radius * 2,
+        height: widget.node.radius * 2,
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.transparent,
+          color: Colors.green,
         ),
       ),
     );
