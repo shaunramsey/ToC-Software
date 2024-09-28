@@ -179,7 +179,7 @@ class _DFACanvasState extends State<DFACanvas> {
               width: widget.sizeX,
               height: widget.sizeY,
               decoration: BoxDecoration(
-                color: Colors.grey[200], // Changed to light grey
+                color: Colors.grey[400], // Changed to light grey
                 border: Border.all(color: Colors.black),
               ),
             ),
